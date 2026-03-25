@@ -199,3 +199,6 @@ to_generate(arch, 'output.tex')
 Key `to_Conv` parameters: `name`, `s_filer` (spatial size label), `n_filer` (filter count label), `offset` (3D shift), `to` (anchor), `height`, `depth`, `width`, `caption`.
 
 The Python API does **not** expose: per-layer opacity, `bandopacity`, all 3D corner coordinates, image inclusion, custom Ball logos, or advanced path routing. Use raw LaTeX for those.
+
+
+**IMPORTANT** do not use the Python API, instead directly generate LaTeX code. This gives more granular control over all elements in the figure and allows for more detailed troubleshooting.
