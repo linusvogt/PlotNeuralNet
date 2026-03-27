@@ -175,30 +175,4 @@ Ball nodes expose: `name-west`, `name-east`, `name-north`, `name-south`, `name-a
 
 ---
 
-## Python API (pycore/)
-
-The Python API (`pycore/tikzeng.py`) is a convenience wrapper that generates the LaTeX above. Each function returns a raw string; `to_generate(arch, 'output.tex')` concatenates and writes the file.
-
-```python
-import sys; sys.path.append('../')
-from pycore.tikzeng import *
-from pycore.blocks import *   # composite helpers: block_2ConvPool, block_Unconv, block_Res
-
-arch = [
-    to_head('..'),     # path to layers/ directory
-    to_cor(),
-    to_begin(),
-    to_Conv("conv1", s_filer=32, n_filer=64, offset="(0,0,0)", to="(0,0,0)", height=40, depth=40, width=2),
-    to_Pool("pool1", offset="(0,0,0)", to="(conv1-east)"),
-    to_connection("conv1", "pool1"),
-    to_end()
-]
-to_generate(arch, 'output.tex')
-```
-
-Key `to_Conv` parameters: `name`, `s_filer` (spatial size label), `n_filer` (filter count label), `offset` (3D shift), `to` (anchor), `height`, `depth`, `width`, `caption`.
-
-The Python API does **not** expose: per-layer opacity, `bandopacity`, all 3D corner coordinates, image inclusion, custom Ball logos, or advanced path routing. Use raw LaTeX for those.
-
-
 **IMPORTANT** do not use the Python API, instead directly generate LaTeX code. This gives more granular control over all elements in the figure and allows for more detailed troubleshooting.
