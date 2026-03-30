@@ -33,7 +33,7 @@
 %% -- Frame --
 \node[
     draw=gray!60, fill=white, fill opacity=0.90,
-    minimum width=26.0cm, minimum height=6.5cm,
+    minimum width=16.0cm, minimum height=4.7cm,
     anchor=north west, rounded corners=5pt, inner sep=6pt
 ] at (0, 0) {};
 
@@ -47,75 +47,58 @@
 %% Row 1: ResBlock
 \node[draw, fill=\ResColor, fill opacity=0.5,
       minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw1) at (0.5, -0.9) {};
+] (sw1) at (0.5, -1.1) {};
 \node[fill=\ResNormColor, fill opacity=0.7,
       minimum width=0.3cm, minimum height=0.5cm, anchor=east
 ] at (sw1.east) {};
 \node[anchor=west, font=\small] at ($(sw1.east)+(0.15,0)$)
-    {ResBlock$\times$2 \,--\, Conv3$\times$3, GroupNorm, SiLU (time-conditioned via FiLM shift)};
-
-%% Row 2: Bottleneck
-\node[draw, fill=\ResColor, fill opacity=0.5,
-      minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw2) at (0.5, -1.7) {};
-\node[fill=\ResNormColor, fill opacity=0.7,
-      minimum width=0.3cm, minimum height=0.5cm, anchor=east
-] at (sw2.east) {};
-\node[anchor=west, font=\small] at ($(sw2.east)+(0.15,0)$)
-    {Bottleneck ResBlock$\times$2 \,--\, same structure, lowest resolution (D/8)};
+    {ResBlock: Conv3$\times$3, GroupNorm, SiLU};
 
 %% Row 3: AvgPool
 \node[draw, fill=\DownColor, fill opacity=0.6,
       minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw3) at (0.5, -2.5) {};
+] (sw3) at (0.5, -1.9) {};
 \node[anchor=west, font=\small] at ($(sw3.east)+(0.15,0)$)
-    {AvgPool2d $\downarrow$2 \,--\, spatial downsampling (factor 2)};
+    {AvgPool2d $\downarrow$2};
 
 %% Row 4: Upsample
 \node[draw, fill=\UpColor, fill opacity=0.6,
       minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw4) at (0.5, -3.3) {};
+] (sw4) at (0.5, -2.7) {};
 \node[anchor=west, font=\small] at ($(sw4.east)+(0.15,0)$)
-    {Bilinear Upsample $\uparrow$2 \,--\, followed by 1$\times$1 proj if channel count changes};
+    {Bilinear Upsample $\uparrow$2};
 
 %% Row 5: Elementwise addition (skip-add ball)
 \node[draw=\AddColor, fill=\AddColor, fill opacity=0.4,
       circle, minimum size=0.7cm, font=\footnotesize
-] (sw5) at (0.95, -4.1) {$+$};
+] (sw5) at (0.95, -3.5) {$+$};
 \node[anchor=west, font=\small] at ($(sw5.east)+(0.15,0)$)
-    {Elementwise addition \,--\, skip connection (encoder feature added to decoder feature)};
+    {Elementwise addition};
 
 %% Row 6: Input / Output tensors
 \node[draw, fill=\InOutColor, fill opacity=0.7,
       minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw6) at (0.5, -4.9) {};
+] (sw6) at (0.5, -4.3) {};
 \node[anchor=west, font=\small] at ($(sw6.east)+(0.15,0)$)
-    {Input tensor $(B,\,1\!+\!N,\,D,\,D)$ / Output tensor $(B,\,1,\,D,\,D)$};
-
-%% Row 7: 1x1 Conv
-\node[draw, fill=\OutConvColor, fill opacity=0.6,
-      minimum width=0.9cm, minimum height=0.5cm, anchor=west
-] (sw7) at (0.5, -5.7) {};
-\node[anchor=west, font=\small] at ($(sw7.east)+(0.15,0)$)
-    {1$\times$1 Conv \,--\, final projection to single output channel};
+    {Input/output tensors};
 
 % ------------------------------------------------------------------
 %  RIGHT COLUMN — Connection types
 % ------------------------------------------------------------------
 
-\node[font=\small\bfseries, anchor=west] at (15.5, -0.7) {Connections:};
+% \node[font=\normalsize\bfseries, anchor=west] at (8.5, -0.4) {Connections:};
 
 %% Forward connection
-\coordinate (fw1) at (15.5, -1.4);
-\coordinate (fw2) at (17.7, -1.4);
+\coordinate (fw1) at (8.8, -1.1);
+\coordinate (fw2) at (11.2, -1.1);
 \draw[connection] (fw1) -- node{\midarrow} (fw2);
-\node[anchor=west, font=\small] at (17.9, -1.4) {Forward data flow};
+\node[anchor=west, font=\small] at (11.4, -1.1) {Forward data flow};
 
 %% Skip connection
-\coordinate (sk1) at (15.5, -2.4);
-\coordinate (sk2) at (17.7, -2.4);
+\coordinate (sk1) at (8.8, -2);
+\coordinate (sk2) at (11.2, -2);
 \draw[copyconnection] (sk1) -- node{\copymidarrow} (sk2);
-\node[anchor=west, font=\small] at (17.9, -2.4) {Skip connection (elementwise add)};
+\node[anchor=west, font=\small] at (11.4, -2) {Skip connection};
 
 \end{tikzpicture}
 \end{document}
