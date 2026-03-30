@@ -1,0 +1,121 @@
+\documentclass[border=8pt, multi, tikz]{standalone}
+\usepackage{import}
+\subimport{../layers/}{init}
+\usetikzlibrary{calc}
+
+% ---------------------------------------------------------------
+% Color definitions  (must match unet.tex)
+% ---------------------------------------------------------------
+\def\InOutColor{rgb:green,4;white,6}            % Input / Output tensors
+\def\ResColor{rgb:yellow,5;red,2.5;white,5}     % ResBlock main
+\def\ResNormColor{rgb:yellow,5;red,5;white,5}   % ResBlock band (GroupNorm+SiLU)
+\def\DownColor{rgb:red,1;black,0.3}             % AvgPool downsample
+\def\UpColor{rgb:blue,2;green,1;black,0.3}      % Bilinear upsample
+\def\AddColor{rgb:blue,5;green,15}              % Skip-add ball
+\def\OutConvColor{rgb:yellow,5;red,2.5;white,5} % Final 1x1 conv
+
+\newcommand{\copymidarrow}{\tikz \draw[-Stealth,line width=0.8mm,draw=black] (-0.3,0) -- ++(0.3,0);}
+
+\begin{document}
+\begin{tikzpicture}
+
+% Connection styles  (must match unet.tex)
+\tikzstyle{connection}=[ultra thick,every node/.style={sloped,allow upside down},draw=\edgecolor,opacity=0.7]
+\tikzstyle{copyconnection}=[ultra thick,every node/.style={sloped,allow upside down},draw=black,opacity=0.9]
+
+% =====================================================================
+%  LEGEND — layer types (left column) + connections (right column)
+%
+%  To edit a label:  find the row below, change the text in braces.
+%  Row spacing:  0.8 units between rows; adjust y values if adding rows.
+% =====================================================================
+
+%% -- Frame --
+\node[
+    draw=gray!60, fill=white, fill opacity=0.90,
+    minimum width=26.0cm, minimum height=6.5cm,
+    anchor=north west, rounded corners=5pt, inner sep=6pt
+] at (0, 0) {};
+
+\node[font=\normalsize\bfseries, anchor=north west] at (0.3, -0.2) {Legend};
+
+% ------------------------------------------------------------------
+%  LEFT COLUMN — Layer types
+%  Each row: colored swatch node  +  label node
+% ------------------------------------------------------------------
+
+%% Row 1: ResBlock
+\node[draw, fill=\ResColor, fill opacity=0.5,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw1) at (0.5, -0.9) {};
+\node[fill=\ResNormColor, fill opacity=0.7,
+      minimum width=0.3cm, minimum height=0.5cm, anchor=east
+] at (sw1.east) {};
+\node[anchor=west, font=\small] at ($(sw1.east)+(0.15,0)$)
+    {ResBlock$\times$2 \,--\, Conv3$\times$3, GroupNorm, SiLU (time-conditioned via FiLM shift)};
+
+%% Row 2: Bottleneck
+\node[draw, fill=\ResColor, fill opacity=0.5,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw2) at (0.5, -1.7) {};
+\node[fill=\ResNormColor, fill opacity=0.7,
+      minimum width=0.3cm, minimum height=0.5cm, anchor=east
+] at (sw2.east) {};
+\node[anchor=west, font=\small] at ($(sw2.east)+(0.15,0)$)
+    {Bottleneck ResBlock$\times$2 \,--\, same structure, lowest resolution (D/8)};
+
+%% Row 3: AvgPool
+\node[draw, fill=\DownColor, fill opacity=0.6,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw3) at (0.5, -2.5) {};
+\node[anchor=west, font=\small] at ($(sw3.east)+(0.15,0)$)
+    {AvgPool2d $\downarrow$2 \,--\, spatial downsampling (factor 2)};
+
+%% Row 4: Upsample
+\node[draw, fill=\UpColor, fill opacity=0.6,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw4) at (0.5, -3.3) {};
+\node[anchor=west, font=\small] at ($(sw4.east)+(0.15,0)$)
+    {Bilinear Upsample $\uparrow$2 \,--\, followed by 1$\times$1 proj if channel count changes};
+
+%% Row 5: Elementwise addition (skip-add ball)
+\node[draw=\AddColor, fill=\AddColor, fill opacity=0.4,
+      circle, minimum size=0.7cm, font=\footnotesize
+] (sw5) at (0.95, -4.1) {$+$};
+\node[anchor=west, font=\small] at ($(sw5.east)+(0.15,0)$)
+    {Elementwise addition \,--\, skip connection (encoder feature added to decoder feature)};
+
+%% Row 6: Input / Output tensors
+\node[draw, fill=\InOutColor, fill opacity=0.7,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw6) at (0.5, -4.9) {};
+\node[anchor=west, font=\small] at ($(sw6.east)+(0.15,0)$)
+    {Input tensor $(B,\,1\!+\!N,\,D,\,D)$ / Output tensor $(B,\,1,\,D,\,D)$};
+
+%% Row 7: 1x1 Conv
+\node[draw, fill=\OutConvColor, fill opacity=0.6,
+      minimum width=0.9cm, minimum height=0.5cm, anchor=west
+] (sw7) at (0.5, -5.7) {};
+\node[anchor=west, font=\small] at ($(sw7.east)+(0.15,0)$)
+    {1$\times$1 Conv \,--\, final projection to single output channel};
+
+% ------------------------------------------------------------------
+%  RIGHT COLUMN — Connection types
+% ------------------------------------------------------------------
+
+\node[font=\small\bfseries, anchor=west] at (15.5, -0.7) {Connections:};
+
+%% Forward connection
+\coordinate (fw1) at (15.5, -1.4);
+\coordinate (fw2) at (17.7, -1.4);
+\draw[connection] (fw1) -- node{\midarrow} (fw2);
+\node[anchor=west, font=\small] at (17.9, -1.4) {Forward data flow};
+
+%% Skip connection
+\coordinate (sk1) at (15.5, -2.4);
+\coordinate (sk2) at (17.7, -2.4);
+\draw[copyconnection] (sk1) -- node{\copymidarrow} (sk2);
+\node[anchor=west, font=\small] at (17.9, -2.4) {Skip connection (elementwise add)};
+
+\end{tikzpicture}
+\end{document}
